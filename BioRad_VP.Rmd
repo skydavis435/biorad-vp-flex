@@ -144,8 +144,7 @@ renderDataTable({
                  search = list(regex = TRUE, 
                                caseInsensitive = TRUE),
                  dom = 'Bfrtip',
-                 buttons = list('copy', 
-                                list(extend = 'csv',
+                 buttons = list(list(extend = 'csv',
                                      filename = basename(input$nex_file)),
                                 list(extend= 'excel',
                                      filename = basename(input$nex_file))
