@@ -1,0 +1,161 @@
+---
+title: "BioRad Vertical Profiles"
+output: 
+    flexdashboard::flex_dashboard:
+      vertical_layout: scroll
+      orientation: rows
+      theme: yeti
+social: menu
+source_code: embed
+runtime: shiny
+---
+    
+```{r global, include=FALSE}
+
+# load data in 'global' chunk so it can be shared by all users of the dashboard
+source('lib/initialize.R')
+station_choices <- read_csv(here('nexrad_station_info/nexrad-stations.csv'))
+bioRad::check_docker()
+
+
+```
+
+Instructions
+=======================================================================
+
+### Welcome
+This is a flexDashboard that was built around the BioRad package's `calculate_vp()` function. It's purpose is to take some of the hassle and potential for error out of the process by replacing code inputs with a graphical user interface. 
+
+Documentation for the function may be found here:
+
+* https://rdrr.io/cran/bioRad/man/calculate_vp.html
+
+
+When you are ready to begin, click the tab at the top labeled "Calculate Vertical Profiles."
+
+Once there, select a NEXRAD station from the available choices to the left. Next, select the date that you are interested in. A drop down list will show the available NEXRAD files for the selected station and date. Select a file and click "Calculate Vertical Profile"
+
+Tabs will populate to the right with a plot and tabular information about the selected date and time. 
+
+Calculate Vertical Profiles
+=======================================================================
+
+Inputs {.sidebar data-width=375}
+-----------------------------------------------------------------------
+    
+```{r}
+# Select NEXRAD Station
+selectInput(inputId = 'nex_station', label = strong('Select NEXRAD Station:'), width = '100%',
+              choices = station_choices %>% 
+                select(ICAO) %>%
+                distinct() %>% 
+                deframe(),
+              selected = 'KFWS')
+# Select Date
+dateInput(inputId = 'date', label = strong('Select Date:'), width = '100%')
+
+# Create a list of available NEXRAD files for selected station and date
+available_files <- reactive({
+    get_bucket_df(bucket = "noaa-nexrad-level2", 
+                  key = "",
+                  prefix = paste0(as.character(input$date, format="%Y/%m/%d"),"/", input$nex_station)
+                  ) %>% 
+        tibble()
+    })
+# Select NEXRAD file
+renderUI({
+    selectInput(inputId = 'nex_file', label = strong('Select from Available NEXRAD Files:'), width = '100%',
+            choices = available_files() %>% 
+                deframe()
+            )
+         })
+
+actionButton(inputId = 'action',label = 'Calculate Vertical Profile',icon = icon('satellite-dish'))
+
+# observeEvent(input$action, {
+#   updateTabsetPanel(session = session, inputId = 'tabs', selected = 'Vertical Profile')
+# })
+
+```
+
+
+Row {.tabset .tabset-fade}
+-----------------------------------------------------------------------
+
+### Vertical Profile
+
+```{r, fig.height=10, fig.width=8}
+
+# Download radar data and store vertical profile information as a reactive variable when button clicked
+  my_vp <- eventReactive(input$action, {
+    if(file.exists(here('nexrad_data', input$nex_file)) == T) {
+      # Using BioRad, calculate vertical profile
+      calculate_vp(here('nexrad_data', input$nex_file),
+                   h_layer = 300, 
+                   dual_pol = T, 
+                   dealias = T,
+                   range_max = 35000,
+                   sd_vvp_threshold = 1)
+    } else {
+    # Save Radar Data File from AWS
+      save_object(object = input$nex_file, bucket = "noaa-nexrad-level2", key = "", secret = "", region = "us-east-1",
+                      file = here('nexrad_data', input$nex_file))
+    # Using BioRad, calculate vertical profile
+      calculate_vp(here('nexrad_data', input$nex_file),
+                   h_layer = 300, 
+                   dual_pol = T, 
+                   dealias = T,
+                   range_max = 35000,
+                   sd_vvp_threshold = 1)
+    }
+      })
+# Offer an option to save the plot
+  # downloadButton(outputId = "savePlot",label = "Save Plot")
+  downloadHandler(filename = function() {
+    filename = paste0(basename(input$nex_file), ".png")
+    },
+    content = function(file) {
+      png(file, width = 640, height = 480)
+      plot(my_vp(), quantity = 'dbz',main = basename(input$nex_file)) 
+      dev.off()
+      }
+    )
+# Render the Vertical Profile
+  miniContentPanel(
+  renderPlot({
+    req(my_vp() )
+    plot(my_vp(), quantity = 'dbz',main = basename(input$nex_file)) 
+    }, height = 750),
+  scrollable = T
+  )
+```
+
+### Tabular
+```{r}
+renderDataTable({
+  req(my_vp())
+  my_vp()$data %>% 
+    datatable(extensions = list('Scroller' = NULL,'Buttons' = NULL),
+              options = list(scrollX = TRUE,
+                 deferRender = TRUE,
+                 scrollY = '600px',
+                 scroller = TRUE,
+                 searchHighlight = TRUE, 
+                 search = list(regex = TRUE, 
+                               caseInsensitive = TRUE),
+                 dom = 'Bfrtip',
+                 buttons = list('copy', 
+                                list(extend = 'csv',
+                                     filename = basename(input$nex_file)),
+                                list(extend= 'excel',
+                                     filename = basename(input$nex_file))
+                                )
+                 ),
+              rownames = F, 
+              selection = 'single',
+              escape = F,
+              filter = 'bottom',
+              class = 'cell-border strip hover')
+  })
+```
+
