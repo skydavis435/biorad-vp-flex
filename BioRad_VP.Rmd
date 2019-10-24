@@ -88,6 +88,7 @@ Row {.tabset .tabset-fade}
 
 # Download radar data and store vertical profile information as a reactive variable when button clicked
   my_vp <- eventReactive(input$action, {
+    # Check to see if you already have the radar file, if so, use it
     if(file.exists(here('nexrad_data', input$nex_file)) == T) {
       # Using BioRad, calculate vertical profile
       calculate_vp(here('nexrad_data', input$nex_file),
@@ -97,6 +98,7 @@ Row {.tabset .tabset-fade}
                    range_max = 35000,
                    sd_vvp_threshold = 1)
     } else {
+    # If you don't already have the necessary file...
     # Save Radar Data File from AWS
       save_object(object = input$nex_file, bucket = "noaa-nexrad-level2", key = "", secret = "", region = "us-east-1",
                       file = here('nexrad_data', input$nex_file))
