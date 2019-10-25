@@ -33,9 +33,11 @@ Documentation for the `bioRad::calculate_vp()` function may be found here:
 
 When you are ready to begin, click the tab at the top labeled "Calculate Vertical Profiles."
 
-Once there, select a NEXRAD station from the available choices to the left. Next, select the date that you are interested in. A drop down list will show the available NEXRAD files for the selected station and date. Select a file and click "Calculate Vertical Profile"
+Once there, select a NEXRAD station from the available choices to the left. Next, select the date that you are interested in. A drop down list will show the available NEXRAD files for the selected station and date. Select a file and decide whether or not you want to rely on Automatic Configuration. If manual configuration is required, remove the checkbox from the Enable Automatic Configuration option. Adjust the parameters to your liking. In both automatic and manual mode, clicking "Calculate Vertical Profile" will begin calculations
 
-Tabs will populate to the right with a plot and tabular information about the selected date and time. 
+Tabs will populate to the right with a plot and tabular information about the selected date and time. Each can be saved to your machine as a PNG or CSV/EXCEL file respectively. 
+
+Have fun!
 
 Calculate Vertical Profiles
 =======================================================================
