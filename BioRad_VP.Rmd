@@ -26,7 +26,7 @@ Instructions
 ### Welcome
 This is a flexDashboard that was built around the BioRad package's `calculate_vp()` function. It's purpose is to take some of the hassle and potential for error out of the process by replacing code inputs with a graphical user interface. 
 
-Documentation for the function may be found here:
+Documentation for the `calculate_vp()` function may be found here:
 
 * https://rdrr.io/cran/bioRad/man/calculate_vp.html
 
