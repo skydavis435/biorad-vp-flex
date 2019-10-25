@@ -71,8 +71,33 @@ renderUI({
                   deframe()
                 )
   })
+# autoconfig
+checkboxInput(inputId = 'autoconf',
+              label = tagList(strong('Enable Automatic Configuration?'),
+                              br(),
+                              tags$sub('logical. When TRUE, default optimal configuration settings are selected automatically, and other user settings are ignored.'),
+                              br(),
+                              tags$sub('Turn on autoconf to automatically select the optimal parameters for a given radar file. The default for C-band data is to apply rain-filtering in single polarization mode, as well as dual polarization mode when available.'),
+                              br(),
+                              tags$sub('The default for S-band data is to apply precipitation filtering in dual-polarization mode.')
+                              ),
+              value = TRUE,
+              width = '100%')
 
 # Create GUI components for all calculate_vp toggles/switches
+# nyquist_min
+nyquist_min <- reactive({
+  ifelse(input$dealias == T, 5, 25)
+})
+output$nyquist_min_ui <- renderUI({tagList(strong('nyquist_min'),
+                                            br(),
+                                            renderText(nyquist_min() ),
+                                            tags$sub('numeric. Minimum Nyquist velocity of scans in m/s for scans to be included in the analysis.')
+                                            )
+                                    })
+renderUI({
+  if(input$autoconf == FALSE) {
+  tagList(
 # sd_vpp_threshold
 numericInput(inputId = 'sd_vpp_threshold', 
              label = tagList(strong('sd_vpp_threshold'), 
@@ -80,7 +105,7 @@ numericInput(inputId = 'sd_vpp_threshold',
                              tags$sub('numeric. Lower threshold in radial velocity standard deviation (profile quantity sd_vvp) in m/s. Biological signals with sd_vvp < sd_vvp_threshold are set to zero.')
                              ),
              value = 1,
-             width = '100%')
+             width = '100%'),
 
 # rcs
 numericInput(inputId = 'rcs', 
@@ -89,14 +114,14 @@ numericInput(inputId = 'rcs',
                              tags$sub('numeric. Radar cross section per bird in cm^2.')
                              ),
              value = 11,
-             width = '100%')
+             width = '100%'),
 
 # dual_pol
 checkboxInput(inputId = 'dual_pol',
               label = tagList(strong('Use dual-pol mode?'),
                               br(),
                               tags$sub('logical. When TRUE use dual-pol mode, in which meteorological echoes are filtered using the correlation coefficient rho_hv. When FALSE use single polarization mode based only on reflectivity and radial velocity quantities.')),
-              value = TRUE)
+              value = TRUE),
 
 # rho_hv
 numericInput(inputId = 'rho_hv', 
@@ -108,7 +133,7 @@ numericInput(inputId = 'rho_hv',
              min = 0,
              max = 1,
              step = 0.01, 
-             width = '100%')
+             width = '100%'),
 
 # elev_min
 numericInput(inputId = 'elev_min', 
@@ -120,7 +145,7 @@ numericInput(inputId = 'elev_min',
              min = 0,
              max = 90,
              step = 1,
-             width = '100%')
+             width = '100%'),
 
 # elev_max
 numericInput(inputId = 'elev_max', 
@@ -132,7 +157,7 @@ numericInput(inputId = 'elev_max',
              min = 1,
              max = 90,
              step = 1,
-             width = '100%')
+             width = '100%'),
 
 # azim_min
 numericInput(inputId = 'azim_min', 
@@ -144,7 +169,7 @@ numericInput(inputId = 'azim_min',
              min = 0,
              max = 360,
              step = 0.5,
-             width = '100%')
+             width = '100%'),
 
 # azim_max
 numericInput(inputId = 'azim_max', 
@@ -156,7 +181,7 @@ numericInput(inputId = 'azim_max',
              min = 1,
              max = 360,
              step = 0.5,
-             width = '100%')
+             width = '100%'),
 
 # min max range
 sliderInput(inputId = 'min_max_range',
@@ -168,7 +193,7 @@ sliderInput(inputId = 'min_max_range',
             max = 230,
             value = c(5,35),
             step = 1,
-            width = '100%')
+            width = '100%'),
 
 # n_layer
 sliderInput(inputId = 'n_layer', 
@@ -180,7 +205,7 @@ sliderInput(inputId = 'n_layer',
              min = 1,
              max = 100,
              step = 1,
-             width = '100%')
+             width = '100%'),
 
 # h_layer
 numericInput(inputId = 'h_layer', 
@@ -192,26 +217,16 @@ numericInput(inputId = 'h_layer',
              min = 100,
              max = 2000,
              step = 100,
-             width = '100%')
+             width = '100%'),
 
 # dealias
 checkboxInput(inputId = 'dealias',
               label = tagList(strong('Dealias radial velocities?'),
                               br(),
                               tags$sub('logical. Whether to dealias radial velocities; this should typically be done when the scans in the polar volume have low Nyquist velocities (below 25 m/s).')),
-              value = TRUE)
+              value = TRUE),
 
-# nyquist_min
-nyquist_min <- reactive({
-  ifelse(input$dealias == T, 5, 25)
-})
-output$nyquist_min_ui <- renderUI({tagList(strong('nyquist_min'),
-                                            br(),
-                                            renderText(nyquist_min() ),
-                                            tags$sub('numeric. Minimum Nyquist velocity of scans in m/s for scans to be included in the analysis.')
-                                            )
-                                    })
-uiOutput('nyquist_min_ui')
+uiOutput('nyquist_min_ui'),
 
 # dbz_quantity
 selectInput(inputId = 'dbz_quantity',
@@ -222,6 +237,9 @@ selectInput(inputId = 'dbz_quantity',
             choices = c('DBZH','DBZV','TH','TV'),
             selected = 'DBZH',
             multiple = F,width = '100%')
+)
+  } else{return(NULL)}
+})
 
 actionButton(inputId = 'action',label = 'Calculate Vertical Profile',icon = icon('satellite-dish'))
 
@@ -238,7 +256,7 @@ Row {.tabset .tabset-fade}
 # Download radar data and store vertical profile information as a reactive variable when button clicked
   my_vp <- eventReactive(input$action, {
     # Check to see if you already have the radar file, if so, use it
-    if(file.exists(here('nexrad_data', input$nex_file)) == T) {
+    if(file.exists(here('nexrad_data', input$nex_file)) == T & input$autoconf == F) {
       # Using BioRad, calculate vertical profile
       calculate_vp(here('nexrad_data', input$nex_file),
                    sd_vvp_threshold = input$sd_vpp_threshold,
@@ -256,7 +274,7 @@ Row {.tabset .tabset-fade}
                    dealias = input$dealias,
                    nyquist_min = nyquist_min(),
                    dbz_quantity = input$dbz_quantity)
-    } else {
+    } else if (file.exists(here('nexrad_data', input$nex_file)) == F & input$autoconf == F) {
     # If you don't already have the necessary file...
     # Save Radar Data File from AWS
       save_object(object = input$nex_file, bucket = "noaa-nexrad-level2", key = "", secret = "", region = "us-east-1",
@@ -278,16 +296,35 @@ Row {.tabset .tabset-fade}
                    dealias = input$dealias,
                    nyquist_min = nyquist_min(),
                    dbz_quantity = input$dbz_quantity)
+    } else if (file.exists(here('nexrad_data', input$nex_file)) == T & input$autoconf == T) {
+      # Using BioRad, calculate vertical profile
+      calculate_vp(here('nexrad_data', input$nex_file),
+                   autoconf = input$autoconf)
+    } else {
+      # If you don't already have the necessary file...
+    # Save Radar Data File from AWS
+      save_object(object = input$nex_file, bucket = "noaa-nexrad-level2", key = "", secret = "", region = "us-east-1",
+                      file = here('nexrad_data', input$nex_file))
+    # Using BioRad, calculate vertical profile
+      calculate_vp(here('nexrad_data', input$nex_file),
+                   autoconf = input$autoconf)
     }
       })
 # Offer an option to save the plot
-  # downloadButton(outputId = "savePlot",label = "Save Plot")
+plot_filename <- eventReactive(input$action, {
+  ifelse(input$autoconf == T, paste0('automatic_options_',basename(input$nex_file), ".png"), paste0('manual_options_',basename(input$nex_file), ".png") )
+})
+plot_title <- eventReactive(input$action, {
+    ifelse(input$autoconf == T, paste0('automatic_options_',basename(input$nex_file)), paste0('manual_options_',basename(input$nex_file)) )
+
+})
+# downloadButton(outputId = "savePlot",label = "Save Plot")
   downloadHandler(filename = function() {
-    filename = paste0('manual_options_',basename(input$nex_file), ".png")
+    filename = plot_filename()
     },
     content = function(file) {
       png(file, width = 640, height = 480)
-      plot(my_vp(), quantity = 'dbz',main = paste0('manual_options_',basename(input$nex_file))) 
+      plot(my_vp(), quantity = 'dbz',main = plot_title() ) 
       dev.off()
       }
     )
@@ -295,7 +332,7 @@ Row {.tabset .tabset-fade}
   miniContentPanel(
   renderPlot({
     req(my_vp() )
-    plot(my_vp(), quantity = 'dbz',main = paste0('manual_options_',basename(input$nex_file))) 
+    plot(my_vp(), quantity = 'dbz',main = plot_title() ) 
     }, height = 750),
   scrollable = T
   )
@@ -303,6 +340,9 @@ Row {.tabset .tabset-fade}
 
 ### Tabular
 ```{r}
+tabular_filename <- reactive({
+      ifelse(input$autoconf == T, paste0('automatic_options_',basename(input$nex_file)), paste0('manual_options_',basename(input$nex_file)) )
+  })
 renderDataTable({
   req(my_vp())
   my_vp()$data %>% 
@@ -316,9 +356,9 @@ renderDataTable({
                                caseInsensitive = TRUE),
                  dom = 'Bfrtip',
                  buttons = list(list(extend = 'csv',
-                                     filename = paste0('manual_options_',basename(input$nex_file))),
+                                     filename = tabular_filename()),
                                 list(extend= 'excel',
-                                     filename = paste0('manual_options_',basename(input$nex_file)))
+                                     filename = tabular_filename())
                                 )
                  ),
               rownames = T, 
