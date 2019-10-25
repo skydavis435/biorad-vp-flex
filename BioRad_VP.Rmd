@@ -64,11 +64,14 @@ available_files <- reactive({
     })
 # Select NEXRAD file
 renderUI({
-    selectInput(inputId = 'nex_file', label = strong('Select from Available NEXRAD Files:'), width = '100%',
-            choices = available_files() %>% 
-                deframe()
-            )
-         })
+    selectInput(inputId = 'nex_file', 
+                label = strong('Select from Available NEXRAD Files:'), 
+                width = '100%',
+                choices = available_files() %>% 
+                  deframe()
+                )
+  })
+
 # Create GUI components for all calculate_vp toggles/switches
 # sd_vpp_threshold
 numericInput(inputId = 'sd_vpp_threshold', 
