@@ -162,19 +162,20 @@ sliderInput(inputId = 'min_max_range',
                             tags$sub('numeric. Minimum and maximum range in km.')
                             ),
             min = 0,
-            max = 99,
+            max = 230,
             value = c(5,35),
-            step = 1,width = '100%')
+            step = 1,
+            width = '100%')
 
 # n_layer
-numericInput(inputId = 'n_layer', 
-             label = tagList(strong('n_layer'), 
-                             br(),
-                             tags$sub('numeric. Number of altitude layers in the profile.')
-                             ),
+sliderInput(inputId = 'n_layer', 
+            label = tagList(strong('n_layer'), 
+                            br(),
+                            tags$sub('numeric. Number of altitude layers in the profile.')
+                            ),
              value = 20,
              min = 1,
-             max = 20,
+             max = 100,
              step = 1,
              width = '100%')
 
@@ -217,14 +218,9 @@ selectInput(inputId = 'dbz_quantity',
                             ),
             choices = c('DBZH','DBZV','TH','TV'),
             selected = 'DBZH',
-            multiple = F,width = '100%'
-            )
+            multiple = F,width = '100%')
 
 actionButton(inputId = 'action',label = 'Calculate Vertical Profile',icon = icon('satellite-dish'))
-
-# observeEvent(input$action, {
-#   updateTabsetPanel(session = session, inputId = 'tabs', selected = 'Vertical Profile')
-# })
 
 ```
 
@@ -284,11 +280,11 @@ Row {.tabset .tabset-fade}
 # Offer an option to save the plot
   # downloadButton(outputId = "savePlot",label = "Save Plot")
   downloadHandler(filename = function() {
-    filename = paste0(basename(input$nex_file), ".png")
+    filename = paste0('manual_options_',basename(input$nex_file), ".png")
     },
     content = function(file) {
       png(file, width = 640, height = 480)
-      plot(my_vp(), quantity = 'dbz',main = basename(input$nex_file)) 
+      plot(my_vp(), quantity = 'dbz',main = paste0('manual_options_',basename(input$nex_file))) 
       dev.off()
       }
     )
@@ -296,7 +292,7 @@ Row {.tabset .tabset-fade}
   miniContentPanel(
   renderPlot({
     req(my_vp() )
-    plot(my_vp(), quantity = 'dbz',main = basename(input$nex_file)) 
+    plot(my_vp(), quantity = 'dbz',main = paste0('manual_options_',basename(input$nex_file))) 
     }, height = 750),
   scrollable = T
   )
@@ -317,12 +313,12 @@ renderDataTable({
                                caseInsensitive = TRUE),
                  dom = 'Bfrtip',
                  buttons = list(list(extend = 'csv',
-                                     filename = basename(input$nex_file)),
+                                     filename = paste0('manual_options_',basename(input$nex_file))),
                                 list(extend= 'excel',
-                                     filename = basename(input$nex_file))
+                                     filename = paste0('manual_options_',basename(input$nex_file)))
                                 )
                  ),
-              rownames = F, 
+              rownames = T, 
               selection = 'single',
               escape = F,
               filter = 'bottom',
