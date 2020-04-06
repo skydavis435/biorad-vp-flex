@@ -69,8 +69,7 @@ renderUI({
     selectInput(inputId = 'nex_file', 
                 label = strong('Select from Available NEXRAD Files:'), 
                 width = '100%',
-                choices = available_files() %>% 
-                  deframe()
+                choices = available_files() 
                 )
   })
 # autoconfig
